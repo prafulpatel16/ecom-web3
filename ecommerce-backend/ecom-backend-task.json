@@ -1,0 +1,61 @@
+{
+    "family": "ecom-web-backend",
+    "containerDefinitions": [
+        {
+            "name": "backend",
+            "image": "739313151559.dkr.ecr.us-west-1.amazonaws.com/ecom-web-backend:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 5000,
+                    "hostPort": 5000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "POSTGRES_USER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "postgrestest123"
+                },
+                {
+                    "name": "POSTGRES_PORT",
+                    "value": "5432"
+                },
+                {
+                    "name": "POSTGRES_DB",
+                    "value": "ecomm"
+                },
+                {
+                    "name": "POSTGRES_HOST",
+                    "value": "ecom-db.craikm8oia4j.us-west-1.rds.amazonaws.com"
+                }
+
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "ecs-backend-loggroup",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "backend"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::739313151559:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::739313151559:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512"
+}

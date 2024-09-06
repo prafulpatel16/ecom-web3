@@ -1,0 +1,53 @@
+{
+    "family": "ecom-web-frontend",
+    "containerDefinitions": [
+        {
+            "name": "frontend",
+            "image": "739313151559.dkr.ecr.us-west-1.amazonaws.com/ecom-web-frontend:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "REACT_APP_BACKEND_SERVICE",
+                    "value": "http://ecom-service.ecom.local"
+                },
+                {
+                    "name": "SERVER_NAME",
+                    "value": "ecom-alb-1415413729.us-west-1.elb.amazonaws.com"
+                },
+                {
+                    "name": "RESOLVER_IP",
+                    "value": "10.0.0.2"
+                }
+
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "ecs-frontend-loggroup",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "frontend"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::739313151559:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::739313151559:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512"
+}

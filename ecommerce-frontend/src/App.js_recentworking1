@@ -1,0 +1,131 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
+import axiosInstance from './axiosInstance';
+
+function App() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [productName, setProductName] = useState('');
+  const [productPrice, setProductPrice] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [responseMessage, setResponseMessage] = useState('');
+
+  useEffect(() => {
+    fetchProducts(); // Fetch products on component mount
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const backendUrl = `${process.env.REACT_APP_BACKEND_SERVICE}/api/products`;
+      const response = await axios.get(backendUrl);
+      setProducts(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError(`Error fetching products: ${error.message}. Please try again later.`);
+      setLoading(false);
+    }
+  };
+
+  const handleAddOrUpdateProduct = async () => {
+    const backendUrl = selectedProductId 
+      ? `${process.env.REACT_APP_BACKEND_SERVICE}/api/products/${selectedProductId}` 
+      : `${process.env.REACT_APP_BACKEND_SERVICE}/api/products`;
+
+    try {
+      const response = selectedProductId
+        ? await axiosInstance.put(backendUrl, {
+            name: productName,
+            price: parseFloat(productPrice),
+          })
+        : await axiosInstance.post(backendUrl, {
+            name: productName,
+            price: parseFloat(productPrice),
+          });
+
+      setResponseMessage(`Product ${selectedProductId ? 'updated' : 'added'}: ${response.data.name} - $${response.data.price}`);
+      setProductName('');
+      setProductPrice('');
+      setSelectedProductId(null);
+
+      await fetchProducts(); // Refresh the product list after adding/updating a product
+    } catch (error) {
+      console.error(`Error ${selectedProductId ? 'updating' : 'adding'} product:`, error);
+      setResponseMessage(error.response ? error.response.data.message : 'Failed to perform operation');
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    const backendUrl = `${process.env.REACT_APP_BACKEND_SERVICE}/api/products/${id}`;
+
+    try {
+      await axiosInstance.delete(backendUrl);
+      setResponseMessage('Product deleted successfully');
+
+      await fetchProducts(); // Refresh the product list after deletion
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      setResponseMessage(error.response ? error.response.data.message : 'Failed to delete product');
+    }
+  };
+
+  const handleSelectProduct = (product) => {
+    setSelectedProductId(product.id);
+    setProductName(product.name);
+    setProductPrice(product.price);
+  };
+
+  if (loading) {
+    return <div className="App">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="App">{error}</div>;
+  }
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>Product List</h1>
+        <ul className="product-list">
+          {products.length > 0 ? (
+            products.map((product) => (
+              <li key={product.id} className="product-item">
+                <span className="product-name">{product.name} - ${product.price}</span>
+                <div className="product-buttons">
+                  <button className="edit-button" onClick={() => handleSelectProduct(product)}>Edit</button>
+                  <button className="delete-button" onClick={() => handleDeleteProduct(product.id)}>Delete</button>
+                </div>
+              </li>
+            ))
+          ) : (
+            <li>No products available</li>
+          )}
+        </ul>
+        <div className="product-form">
+          <h2>{selectedProductId ? 'Update Product' : 'Add New Product'}</h2>
+          <input
+            type="text"
+            placeholder="Product Name"
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            className="input-field"
+          />
+          <input
+            type="number"
+            placeholder="Product Price"
+            value={productPrice}
+            onChange={(e) => setProductPrice(parseFloat(e.target.value))}
+            className="input-field"
+          />
+          <button className="submit-button" onClick={handleAddOrUpdateProduct}>{selectedProductId ? 'Update' : 'Add'} Product</button>
+          <p>{responseMessage}</p>
+        </div>
+      </header>
+    </div>
+  );
+}
+
+export default App;

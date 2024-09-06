@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./ecommerce-frontend
+    ports:
+      - '3000:80'
+    env_file:
+      - ./ecommerce-frontend/.env  
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build: ./ecommerce-backend
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./ecommerce-backend/.env
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - app-network
+    command: ["./wait-for-it.sh", "rabbitmq:5672", "--", "npm", "start"]
+
+  db:
+    build: ./database
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ecomm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_PORT: 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+    networks:
+      - app-network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'   # RabbitMQ default port
+      - '15672:15672' # RabbitMQ management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge

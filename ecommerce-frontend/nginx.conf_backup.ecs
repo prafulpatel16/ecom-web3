@@ -1,0 +1,41 @@
+# nginx conf file to run with cloud ecs deployment
+server {
+    listen 80;
+    server_name ecom-alb-1415413729.us-west-1.elb.amazonaws.com; # Catch-all server name
+
+    # Define the DNS resolver for service discovery
+    resolver 10.0.0.2 valid=300s; # Use your VPC DNS resolver IP (10.0.0.2 is typical for AWS VPCs)
+
+    # Backend layer
+    # Route requests to the backend service using Cloud Map service discovery
+    location /api/products {
+    #    set $backend_url http://ecom-service.ecom.local:5000; # Your backend service URL
+             $backend_url http://$REACT_APP_BACKEND_SERVICE:5000;
+             
+        proxy_pass $backend_url;
+
+        # Set timeout values
+        proxy_connect_timeout 120s; # Default is 60 seconds
+        proxy_send_timeout 120s;    # Default is 60 seconds
+        proxy_read_timeout 120s;    # Default is 60 seconds
+        send_timeout 120s;          # Default is 60 seconds
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Serve static files for the frontend app
+    # Frontend layer
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+        try_files $uri /index.html;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}

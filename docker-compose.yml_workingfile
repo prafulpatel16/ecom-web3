@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: praful2018/ecom-web-frontend:latest
+    ports:
+      - '3000:80'
+    environment:
+      REACT_APP_BACKEND_SERVICE: http://backend:5000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    image: praful2018/ecom-web-backend:latest
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./ecommerce-backend/.env
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    build: ./database
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ecomm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_PORT: 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge
